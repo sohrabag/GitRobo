@@ -71,6 +71,7 @@ typedef struct persontag {
 	
 	//stack to push the path of snow to plow
 	std::stack<pt> stk_ok;
+	std::vector<pt> path;
 
 	//methods
 	persontag(char leg) : legend(leg), forward_dir(false), downward_dir(false), vert(false), x(0), y(0) {}
@@ -103,16 +104,16 @@ inline void SetCourse(pt psrc, pt pdest) {
 
 			//determine course of movement on the sweden map
 			if (pt_dist.x > 0 && pt_dist.y > 0) {
-				forward_dir = false; downward_dir = false;
+				downward_dir = false; forward_dir = false;
 			}
-			else if (pt_dist.x > 0 && pt_dist.y > 0) {
-				forward_dir = false; downward_dir = true;
+			else if (pt_dist.x > 0 && pt_dist.y < 0) {
+				downward_dir = false; forward_dir = true;
 			}
 			else if (pt_dist.x < 0 && pt_dist.y > 0) {
-				forward_dir = true; downward_dir = false;
+				downward_dir = true; forward_dir = false;
 			}
 			else if (pt_dist.x < 0 && pt_dist.y < 0) {
-				forward_dir = true; downward_dir = true;
+				downward_dir = true; forward_dir = true;
 			}
 			else throw;
 
@@ -139,50 +140,97 @@ inline void SetCourse(pt psrc, pt pdest) {
 
 		//
 		do {
+			//check if x an y are in boundries of the map of sweden
+			if (x < 0 && x >= height) forward_dir ? forward_dir = false : forward_dir = true;
+			if (y < 0 && y >= width) downward_dir ? downward_dir = false : downward_dir = true;
+
 			//check if we arrived to destination home
 			if (Arrived(psrc, pdest)) break;
 
 			//check which direction to move? (vertical or horizontal)
 			if (!vert) 
 			{
+				std::cout << "Moving horizontally..." << std::endl;
+
 				//move horizontally in predefined direction
-				if (map[forward_dir ? (x + 1) : (x - 1)][y] == legend[6]) { // we hit the tree square (#)
+				if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[6]) { // we hit the tree square (#)
 					
 					//move horizontally in reverse direction
 					MoveBackward();
-					forward_dir ^= forward_dir; continue;
+					//forward_dir ^= forward_dir; ? //I dont think this is logical!?
+					//it is time to change to course in vertical motion
+					vert ? vert = false : vert = true;
+#ifdef _DEBUG
+					std::cout << "#---tree obstacle " << '\n' << "x is: " << x << " y is: " << y << std::endl;
+#endif					
+					continue;
+
 					//				if (map[--x][downward_dir ? ++y : --y] == legend[6])
 				}
-				else if (map[forward_dir ? (x + 1) : (x - 1)][y] == legend[4]) { //hit the snowy square (o)
+				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[4]) { //hit the snowy square (o)
 																				 //add this to the path we want to plow snow
+					stk_ok.push(pt(x, forward_dir ? ++y : --y)); 
+					//now we have to move vertically change vert to true
+					vert ? vert = false : vert = true; 
 #ifdef _DEBUG
-					std::cout << "x is: " << x << " y is: " << y << std::endl;
+					std::cout << "o--- snowy road " << '\n' << "x is: " << x << " y is: " << y << std::endl;
 #endif
-					stk_ok.push(pt(x, y)); continue;
-					//now we have to move vertically change vert to true
-					vert ^= vert;
+					continue;
 				}
-				else if (map[forward_dir ? (x + 1) : (x - 1)][y] == legend[5]) {
+				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[5]) {
 					//Add this to the path we want to plow snow (.)
-					stk_ok.push(pt(x, y)); continue;
+					stk_ok.push(pt(x, forward_dir ? ++y : --y));
 					//now we have to move vertically change vert to true
-					vert ^= vert;
+					vert ? vert = false : vert = true;
 
 #ifdef _DEBUG
-					std::cout << "x is: " << x << " y is: " << y << std::endl;
+					std::cout << ". cleaned up road " << '\n' << "x is: " << x << " y is: " << y << std::endl;
 #endif
+					continue;
 				}
 			}
 			else {//move vertically in predefined direction
-#ifdef DEBUG
-				std::cout << "Moving vertically" << std::endl;
-#endif // DEBUG
+				std::cout << "Moving vertically..." << std::endl;
 
+				if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[6]) {//we hit tree obstacle square
+					//move vertically in reverse direction
+					MoveUp();
+					//dont need to change the course of movement vertically stay on this road until
+					//you could go downward direction
+					vert ? vert = false : vert = true;
+#ifdef _DEBUG
+					std::cout << "# obstacle" << '\n' << "x is: " << x << 
+										" y is: " << y << std::endl;
+#endif					continue;
+				}
+				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[4]) {//we hit snow coverd square
+#ifdef _DEBUG
+					std::cout << "o--- snow covered road" << '\n' << "x is: " << x << " y is: " << y << std::endl;
+#endif
+					stk_ok.push(pt(downward_dir ? ++x : --x, y));
+
+					//time to disable vertical motion
+					vert ? vert = false : vert = true;
+					continue;
+				}
+				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[5]) {//cleaned up of snow square
+#ifdef _DEBUG
+					std::cout << ". cleaned up road " << '\n' << "x is: " << x << " y is: " << y << std::endl;
+#endif
+					stk_ok.push(pt(downward_dir ? ++x : --x, y));
+
+					//time to disable vertical motion
+					vert ? vert = false : vert = true;
+					continue;
+
+				}
 			}
 
 
 			//
 		} while (true);
+
+		return path;
 	}
 
 }person;
@@ -244,13 +292,52 @@ int main(void)
 				//locate location of each of homes and store it in each home object
 				if ((strline[j] == legends[0]) || (strline[j] == legends[1]) ||
 					(strline[j] == legends[2]) || (strline[j] == legends[3])) {
-					homelst.push_back(home(pt(j, i), strline[j]));
+					homelst.push_back(home(pt(i, j), strline[j]));
 					homelst[hid].id = strline[j]; homelst[hid].legend = strline[j];
 					hid++;
 				}
 			}
 		}
 		std::cout << std::endl;
+
+		//init homes A, B, C, D
+		home HA(pt(0, 0), 'A');
+		home HB(pt(0, 0), 'B');
+		home HC(pt(0, 0), 'C');
+		home HD(pt(0, 0), 'D');
+
+		//init location of homes(A, B, C, D) for HA, HB, HC, HD
+		for (unsigned i = 0; i < homelst.size(); i++) {
+			if (homelst[i].legend == 'A') {
+				HA.p = homelst[i].p;
+				HA.id = homelst[i].id;//N/A
+			}
+			else if (homelst[i].legend == 'B') {
+				HB.p = homelst[i].p;
+				HB.id = homelst[i].id;//N/A
+			}
+			else if (homelst[i].legend == 'C') {
+				HC.p = homelst[i].p;
+				HC.id = homelst[i].id;//N/A
+			}
+			else if (homelst[i].legend == 'C') {
+				HD.p = homelst[i].p;
+				HD.id = homelst[i].id;//N/A
+			}
+			else {}
+		}
+
+		//init persons A, B, C, D
+		person B('B');
+		person C('C');
+		person D('D');
+		person A('A');
+		//-------------------------
+		//analyze the map
+		//		std::vector<pt> path1 = A.FindPath(HA.p, HB.p, inmap, n,m,legends);
+		std::vector<pt> path2 = B.FindPath(HB.p, HC.p, inmap, n, m, legends);
+		//		std::vector<pt> path3 = C.FindPath(HC.p, HD.p, inmap, n, m, legends);
+		//		std::vector<pt> path4 = D.FindPath(HD.p, HA.p, inmap, n, m, legends);
 
 		for (int i = 0; i < m; i++) {
 			for (int j = 0; j < n; j++) {

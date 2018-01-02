@@ -174,6 +174,9 @@ inline void SetCourse(pt psrc, pt pdest) {
 				}
 			}
 			else {//move vertically in predefined direction
+#ifdef DEBUG
+				std::cout << "Moving vertically" << std::endl;
+#endif // DEBUG
 
 			}
 

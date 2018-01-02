@@ -60,9 +60,70 @@ typedef struct persontag {
 	//stack of set to use for the path
 	std::stack<pt>  curpath;
 
-	//methods
-	persontag(char leg) : legend(leg) {}
+	//flags to determine direction of movement horizontal or vertical
+	bool downward_dir;
+	bool forward_dir;
+	bool vert;
 
+	//x and y coordinates of the square on the grid map of sweden
+	int  x; 
+	int  y;
+	
+	//stack to push the path of snow to plow
+	std::stack<pt> stk_ok;
+
+	//methods
+	persontag(char leg) : legend(leg), forward_dir(false), downward_dir(false), vert(false), x(0), y(0) {}
+
+	//movement of the person methods
+	
+	//move forward
+	inline void MoveForward() { x++; }
+	//move backward
+	inline void MoveBackward() { x--; }
+	//move upward
+	inline void MoveUp() { y--; }
+	//move downward
+	inline void MoveDown() { y++; }
+
+	//check if we arrived from source home to destination home.
+inline bool Arrived(pt psrc, pt pdest) {
+		return(psrc.x == pdest.x && psrc.y == pdest.y);
+	}
+
+//SetCourse will tell person object which direction to choose so that it is shortest, fastest, 
+//and very efficient
+inline void SetCourse(pt psrc, pt pdest) {
+
+		try {
+			//calculate distance between two homes and place it in pt_dist
+			pt pt_dist(0, 0);
+			pt_dist.x = psrc.x - pdest.x;
+			pt_dist.y = psrc.y - pdest.y;
+
+			//determine course of movement on the sweden map
+			if (pt_dist.x > 0 && pt_dist.y > 0) {
+				forward_dir = false; downward_dir = false;
+			}
+			else if (pt_dist.x > 0 && pt_dist.y > 0) {
+				forward_dir = false; downward_dir = true;
+			}
+			else if (pt_dist.x < 0 && pt_dist.y > 0) {
+				forward_dir = true; downward_dir = false;
+			}
+			else if (pt_dist.x < 0 && pt_dist.y < 0) {
+				forward_dir = true; downward_dir = true;
+			}
+			else throw;
+
+		}
+		catch (const std::exception&)
+		{
+			std::cout << "an exception happened" << std::endl;
+		}
+	}
+
+//FindPath finds the path to reach from source to destination home
 	std::vector<pt> FindPath( pt psrc, pt pdest,
 								std::vector<std::vector<int>> map,
 									int width, int height,
@@ -70,12 +131,57 @@ typedef struct persontag {
 	{
 		//(legend[4] = o,  legend[5] = ., legend[6] = #) !!!!
 
+		//set the course of the move from source home to destination home
+		SetCourse(psrc, pdest);
 
+		//set the start point to source home
+		x = psrc.x; y = psrc.y;
 
+		//
 		do {
-			
+			//check if we arrived to destination home
+			if (Arrived(psrc, pdest)) break;
+
+			//check which direction to move? (vertical or horizontal)
+			if (!vert) 
+			{
+				//move horizontally in predefined direction
+				if (map[forward_dir ? (x + 1) : (x - 1)][y] == legend[6]) { // we hit the tree square (#)
+					
+					//move horizontally in reverse direction
+					MoveBackward();
+					forward_dir ^= forward_dir; continue;
+					//				if (map[--x][downward_dir ? ++y : --y] == legend[6])
+				}
+				else if (map[forward_dir ? (x + 1) : (x - 1)][y] == legend[4]) { //hit the snowy square (o)
+																				 //add this to the path we want to plow snow
+#ifdef _DEBUG
+					std::cout << "x is: " << x << " y is: " << y << std::endl;
+#endif
+					stk_ok.push(pt(x, y)); continue;
+					//now we have to move vertically change vert to true
+					vert ^= vert;
+				}
+				else if (map[forward_dir ? (x + 1) : (x - 1)][y] == legend[5]) {
+					//Add this to the path we want to plow snow (.)
+					stk_ok.push(pt(x, y)); continue;
+					//now we have to move vertically change vert to true
+					vert ^= vert;
+
+#ifdef _DEBUG
+					std::cout << "x is: " << x << " y is: " << y << std::endl;
+#endif
+				}
+			}
+			else {//move vertically in predefined direction
+
+			}
+
+
+			//
 		} while (true);
 	}
+
 }person;
 //---------------------------
 

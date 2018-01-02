@@ -1,7 +1,10 @@
+//this is master branch Robo_main.cpp file.
+//After testing
+
 //this file contains all the source code to call features
 //created in classes or global functions or methods of classes
-
-//Anna 
+/*
+//Anna
 //Bengt
 //Christian
 //Diana
@@ -12,7 +15,9 @@
 #include <set>
 #include <stack>
 #include <string>
+*/
 
+#if 0
 //---------------------------
 //data structures
 typedef struct pointtag {
@@ -385,3 +390,4 @@ int main(void)
 
 	return 0;
 }
+#endif

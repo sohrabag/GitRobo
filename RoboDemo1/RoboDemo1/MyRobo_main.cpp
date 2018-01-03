@@ -79,13 +79,13 @@ typedef struct persontag {
 	//movement of the person methods
 	
 	//move forward
-	inline void MoveForward() { x++; }
+	inline void MoveForward() { y++; }
 	//move backward
-	inline void MoveBackward() { x--; }
+	inline void MoveBackward() { y--; }
 	//move upward
-	inline void MoveUp() { y--; }
+	inline void MoveUp() { x--; }
 	//move downward
-	inline void MoveDown() { y++; }
+	inline void MoveDown() { x++; }
 
 	//check if we arrived from source home to destination home.
 inline bool Arrived(pt psrc, pt pdest) {

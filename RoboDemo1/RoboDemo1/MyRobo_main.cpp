@@ -131,7 +131,7 @@ inline void SetCourse(pt psrc, pt pdest) {
 											std::vector<int> legend)
 	{
 		//(legend[4] = o,  legend[5] = ., legend[6] = #) !!!!
-
+		//
 		//set the course of the move from source home to destination home
 		SetCourse(psrc, pdest);
 
@@ -150,26 +150,42 @@ inline void SetCourse(pt psrc, pt pdest) {
 			//check which direction to move? (vertical or horizontal)
 			if (!vert) 
 			{
-				std::cout << "Moving horizontally..." << std::endl;
-
 				//move horizontally in predefined direction
-				if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[6]) { // we hit the tree square (#)
+
+				std::cout << "Moving horizontally..." << std::endl;
+				if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[0] ) {
+					std::cout << "hit a home A..." << std::endl;
+				}
+				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[1]) {
+					std::cout << "hit a home B..." << std::endl;
+				}
+				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[2]) {
+					std::cout << "hit a home C..." << std::endl;
+				}
+				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[3]) {
+					std::cout << "hit a home D..." << std::endl;
+				}
+				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[6]) { // we hit the tree square (#)
 					
 					//move horizontally in reverse direction
-					MoveBackward();
-					//forward_dir ^= forward_dir; ? //I dont think this is logical!?
+					forward_dir ? MoveForward() : MoveBackward(); //useless take cpu time
 					//it is time to change to course in vertical motion
 					vert ? vert = false : vert = true;
 #ifdef _DEBUG
 					std::cout << "#---tree obstacle " << '\n' << "x is: " << x << " y is: " << y << std::endl;
-#endif					
+#endif			
+					//move horizontally in reverse direction
+					forward_dir ? MoveBackward() : MoveForward(); //useless take cpu time
 					continue;
 
 					//				if (map[--x][downward_dir ? ++y : --y] == legend[6])
 				}
 				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[4]) { //hit the snowy square (o)
 																				 //add this to the path we want to plow snow
-					stk_ok.push(pt(x, forward_dir ? ++y : --y)); 
+					//Move horizontally
+					forward_dir ? MoveForward() : MoveBackward();
+					//Add this to the path we want to plow snow (.)
+					stk_ok.push(pt(x, y));
 					//now we have to move vertically change vert to true
 					vert ? vert = false : vert = true; 
 #ifdef _DEBUG
@@ -177,9 +193,11 @@ inline void SetCourse(pt psrc, pt pdest) {
 #endif
 					continue;
 				}
-				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[5]) {
+				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[5]) {//hit cleaned square
+					//Move horizontally
+					forward_dir ? MoveForward() : MoveBackward();
 					//Add this to the path we want to plow snow (.)
-					stk_ok.push(pt(x, forward_dir ? ++y : --y));
+					stk_ok.push(pt(x, y));
 					//now we have to move vertically change vert to true
 					vert ? vert = false : vert = true;
 
@@ -191,33 +209,50 @@ inline void SetCourse(pt psrc, pt pdest) {
 			}
 			else {//move vertically in predefined direction
 				std::cout << "Moving vertically..." << std::endl;
-
-				if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[6]) {//we hit tree obstacle square
+				std::cout << "Moving horizontally..." << std::endl;
+				if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[0]) {
+					std::cout << "hit a home A..." << std::endl;
+				}
+				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[1]) {
+					std::cout << "hit a home B..." << std::endl;
+				}
+				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[2]) {
+					std::cout << "hit a home C..." << std::endl;
+				}
+				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[3]) {
+					std::cout << "hit a home D..." << std::endl;
+				}
+				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[6]) {//we hit tree obstacle square
 					//move vertically in reverse direction
-					MoveUp();
+					downward_dir ? MoveDown() : MoveUp();
 					//dont need to change the course of movement vertically stay on this road until
 					//you could go downward direction
 					vert ? vert = false : vert = true;
 #ifdef _DEBUG
 					std::cout << "# obstacle" << '\n' << "x is: " << x << 
 										" y is: " << y << std::endl;
-#endif					continue;
+#endif				
+					//you hit an obstacle move in reverse direction
+					downward_dir ? MoveUp() : MoveDown();
+					continue;
 				}
 				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[4]) {//we hit snow coverd square
+					downward_dir ? MoveDown() : MoveUp();
 #ifdef _DEBUG
 					std::cout << "o--- snow covered road" << '\n' << "x is: " << x << " y is: " << y << std::endl;
 #endif
-					stk_ok.push(pt(downward_dir ? ++x : --x, y));
+					stk_ok.push(pt(x, y));
 
 					//time to disable vertical motion
 					vert ? vert = false : vert = true;
 					continue;
 				}
 				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[5]) {//cleaned up of snow square
+					downward_dir ? MoveDown() : MoveUp();
 #ifdef _DEBUG
 					std::cout << ". cleaned up road " << '\n' << "x is: " << x << " y is: " << y << std::endl;
 #endif
-					stk_ok.push(pt(downward_dir ? ++x : --x, y));
+					stk_ok.push(pt(x, y));
 
 					//time to disable vertical motion
 					vert ? vert = false : vert = true;
@@ -225,7 +260,6 @@ inline void SetCourse(pt psrc, pt pdest) {
 
 				}
 			}
-
 
 			//
 		} while (true);
@@ -346,7 +380,6 @@ int main(void)
 			std::cout << '\n' << std::endl;
 		}
 	}
-
 
 	return 0;
 }

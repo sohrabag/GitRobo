@@ -30,6 +30,7 @@ typedef struct pathTag {
 	std::vector<pt> data;
 
 }path;
+
 //---------------------------
 typedef struct hometag {
 	int id;
@@ -141,6 +142,7 @@ inline bool OffTargety(pt pdest) {
 
 	return bOffx;
 }
+
 //off target vertically
 inline bool OffTargetx(pt pdest) {
 	bool bOffy(false);
@@ -155,10 +157,12 @@ inline bool OffTargetx(pt pdest) {
 }
 
 //FindPath finds the path to reach from source to destination home
-	std::vector<pt> FindPath( pt psrc, pt pdest,
+	std::vector<pt> FindPath( 
+							pt psrc, pt pdest,
 								std::vector<std::vector<int>> map,
 									int width, int height,
-											std::vector<int> legend)
+											std::vector<int> legend
+												)
 	{
 		//(legend[4] = o,  legend[5] = ., legend[6] = #) !!!!
 		//

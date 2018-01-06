@@ -137,8 +137,12 @@ inline bool OffTargety(pt pdest) {
 	else if (pdest.x > x && !forward_dir) {
 		bOffx = true;
 	}
-	else if (pdest.x < x && forward_dir)
+	else if (pdest.x < x && forward_dir) {
 		bOffx = true;
+	}
+	else if (pdest.x > x && forward_dir) {
+		bOffx = false;
+	}
 
 	return bOffx;
 }
@@ -146,12 +150,15 @@ inline bool OffTargety(pt pdest) {
 //off target vertically
 inline bool OffTargetx(pt pdest) {
 	bool bOffy(false);
+
 	if (pdest.y > y && downward_dir)
 		bOffy = false;
 	else if (pdest.y < y && !downward_dir)
 		bOffy = true;
 	else if (pdest.y > y && !downward_dir)
-		bOffy = false;
+		bOffy = true;
+	else if (pdest.y < y && downward_dir)
+		bOffy = true;
 
 	return bOffy;
 }
@@ -255,7 +262,7 @@ inline bool OffTargetx(pt pdest) {
 					//check off-the target conditions
 					if (OffTargetx(pdest)) {
 						//change the course horizontally and vertically
-						forward_dir ? forward_dir = false : forward_dir = true; //change the course to backward direction
+						forward_dir ? forward_dir = false : forward_dir = true; //change the course to reverse direction
 					}
 
 					continue;
@@ -302,7 +309,7 @@ inline bool OffTargetx(pt pdest) {
 					if (pdest.x != x)
 						vert ? vert = false : vert = true;
 					else
-						vert = false; //only move 
+						vert = false; //only move horizontally
 
 					if (OffTargety(pdest)) {
 						downward_dir ? downward_dir = false : downward_dir = true;
@@ -320,7 +327,7 @@ inline bool OffTargetx(pt pdest) {
 					if (pdest.x != x)
 						vert ? vert = false : vert = true;
 					else
-						vert = false; //only move 
+						vert = false; //only move horizontally
 
 					if (OffTargety(pdest)) {
 						downward_dir ? downward_dir = false : downward_dir = true;

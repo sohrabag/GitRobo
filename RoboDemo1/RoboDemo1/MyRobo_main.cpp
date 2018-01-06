@@ -238,7 +238,7 @@ inline bool OffTargetx(pt pdest) {
 					std::cout << "o--- snowy road " << '\n' << "x is: " << x << " y is: " << y << std::endl;
 #endif
 					//check off-the target conditions
-					if (OffTargetx(pdest)) {
+					if (OffTargetx(pdest) && !bObstx) {
 						//change the course horizontally and vertically
 						forward_dir ? forward_dir = false : forward_dir = true; //change the course to backward direction
 					}
@@ -260,7 +260,7 @@ inline bool OffTargetx(pt pdest) {
 					std::cout << ". cleaned up road " << '\n' << "x is: " << x << " y is: " << y << std::endl;
 #endif
 					//check off-the target conditions
-					if (OffTargetx(pdest)) {
+					if (OffTargetx(pdest) && !bObstx) {
 						//change the course horizontally and vertically
 						forward_dir ? forward_dir = false : forward_dir = true; //change the course to reverse direction
 					}
@@ -311,7 +311,7 @@ inline bool OffTargetx(pt pdest) {
 					else
 						vert = false; //only move horizontally
 
-					if (OffTargety(pdest)) {
+					if (OffTargety(pdest) && !bObsty) {
 						downward_dir ? downward_dir = false : downward_dir = true;
 					}
 					continue;
@@ -329,7 +329,7 @@ inline bool OffTargetx(pt pdest) {
 					else
 						vert = false; //only move horizontally
 
-					if (OffTargety(pdest)) {
+					if (OffTargety(pdest) && !bObsty) {
 						downward_dir ? downward_dir = false : downward_dir = true;
 					}
 					continue;

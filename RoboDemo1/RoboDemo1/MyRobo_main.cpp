@@ -129,18 +129,18 @@ inline void SetCourse(pt psrc, pt pdest) {
 	}
 
 //off target horizontally
-inline bool OffTargetx(pt pdest) {
+inline bool OffTargety(pt pdest) {
 	bool bOffx;
-	if (pdest.x < x && !forward_dir) {
+	if (pdest.x < x && !downward_dir) {
 		bOffx = false;
 	}
-	else if (pdest.x > x && !forward_dir) {
+	else if (pdest.x > x && !downward_dir) {
 		bOffx = true;
 	}
-	else if (pdest.x < x && forward_dir) {
+	else if (pdest.x < x && downward_dir) {
 		bOffx = true;
 	}
-	else if (pdest.x > x && forward_dir) {
+	else if (pdest.x > x && downward_dir) {
 		bOffx = false;
 	}
 
@@ -148,16 +148,16 @@ inline bool OffTargetx(pt pdest) {
 }
 
 //off target vertically
-inline bool OffTargety(pt pdest) {
+inline bool OffTargetx(pt pdest) {
 	bool bOffy(false);
 
-	if (pdest.y > y && downward_dir)
+	if (pdest.y > y && forward_dir)
 		bOffy = false;
-	else if (pdest.y < y && !downward_dir)
+	else if (pdest.y < y && !forward_dir)
+		bOffy = false;
+	else if (pdest.y > y && !forward_dir)
 		bOffy = true;
-	else if (pdest.y > y && !downward_dir)
-		bOffy = true;
-	else if (pdest.y < y && downward_dir)
+	else if (pdest.y < y && forward_dir)
 		bOffy = true;
 
 	return bOffy;

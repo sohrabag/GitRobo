@@ -129,7 +129,7 @@ inline void SetCourse(pt psrc, pt pdest) {
 	}
 
 //off target horizontally
-inline bool OffTargety(pt pdest) {
+inline bool OffTargetx(pt pdest) {
 	bool bOffx;
 	if (pdest.x < x && !forward_dir) {
 		bOffx = false;
@@ -148,7 +148,7 @@ inline bool OffTargety(pt pdest) {
 }
 
 //off target vertically
-inline bool OffTargetx(pt pdest) {
+inline bool OffTargety(pt pdest) {
 	bool bOffy(false);
 
 	if (pdest.y > y && downward_dir)

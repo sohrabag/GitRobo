@@ -64,6 +64,8 @@ typedef struct persontag {
 	bool downward_dir;
 	bool forward_dir;
 	bool vert;
+	bool bObstx;
+	bool bObsty;
 
 	//x and y coordinates of the square on the grid map of sweden
 	int  x; 
@@ -74,7 +76,8 @@ typedef struct persontag {
 	std::vector<pt> path;
 
 	//methods
-	persontag(char leg) : legend(leg), forward_dir(false), downward_dir(false), vert(false), x(0), y(0) {}
+	persontag(char leg) : legend(leg), forward_dir(false), downward_dir(false), 
+		vert(false), bObstx(false), bObsty(false), x(0), y(0) {}
 
 	//movement of the person methods
 	
@@ -123,6 +126,33 @@ inline void SetCourse(pt psrc, pt pdest) {
 			std::cout << "an exception happened" << std::endl;
 		}
 	}
+
+//off target horizontally
+inline bool OffTargety(pt pdest) {
+	bool bOffx;
+	if (pdest.x < x && !forward_dir) {
+		bOffx = false;
+	}
+	else if (pdest.x > x && !forward_dir) {
+		bOffx = true;
+	}
+	else if (pdest.x < x && forward_dir)
+		bOffx = true;
+
+	return bOffx;
+}
+//off target vertically
+inline bool OffTargetx(pt pdest) {
+	bool bOffy(false);
+	if (pdest.y > y && downward_dir)
+		bOffy = false;
+	else if (pdest.y < y && !downward_dir)
+		bOffy = true;
+	else if (pdest.y > y && !downward_dir)
+		bOffy = false;
+
+	return bOffy;
+}
 
 //FindPath finds the path to reach from source to destination home
 	std::vector<pt> FindPath( pt psrc, pt pdest,
@@ -176,6 +206,8 @@ inline void SetCourse(pt psrc, pt pdest) {
 #endif			
 					//move horizontally in reverse direction
 					forward_dir ? MoveBackward() : MoveForward(); //useless take cpu time
+					//we hit obstacle
+					bObstx = true;
 					continue;
 
 					//				if (map[--x][downward_dir ? ++y : --y] == legend[6])
@@ -187,10 +219,19 @@ inline void SetCourse(pt psrc, pt pdest) {
 					//Add this to the path we want to plow snow (.)
 					stk_ok.push(pt(x, y));
 					//now we have to move vertically change vert to true
-					vert ? vert = false : vert = true; 
+					if (pdest.y != y) //unless you hit the row that the home is sitting on it.
+						vert ? vert = false : vert = true;
+					else
+						vert = true; //only move vertically from now on
 #ifdef _DEBUG
 					std::cout << "o--- snowy road " << '\n' << "x is: " << x << " y is: " << y << std::endl;
 #endif
+					//check off-the target conditions
+					if (OffTargetx(pdest)) {
+						//change the course horizontally and vertically
+						forward_dir ? forward_dir = false : forward_dir = true; //change the course to backward direction
+					}
+
 					continue;
 				}
 				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[5]) {//hit cleaned square
@@ -199,17 +240,25 @@ inline void SetCourse(pt psrc, pt pdest) {
 					//Add this to the path we want to plow snow (.)
 					stk_ok.push(pt(x, y));
 					//now we have to move vertically change vert to true
-					vert ? vert = false : vert = true;
+					if(pdest.y != y) //unless you hit the row that the home is sitting on it.
+						vert ? vert = false : vert = true;
+					else
+						vert = true; //only move vertically from now on
 
 #ifdef _DEBUG
 					std::cout << ". cleaned up road " << '\n' << "x is: " << x << " y is: " << y << std::endl;
 #endif
+					//check off-the target conditions
+					if (OffTargetx(pdest)) {
+						//change the course horizontally and vertically
+						forward_dir ? forward_dir = false : forward_dir = true; //change the course to backward direction
+					}
+
 					continue;
 				}
 			}
 			else {//move vertically in predefined direction
 				std::cout << "Moving vertically..." << std::endl;
-				std::cout << "Moving horizontally..." << std::endl;
 				if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[0]) {
 					std::cout << "hit a home A..." << std::endl;
 				}
@@ -234,6 +283,8 @@ inline void SetCourse(pt psrc, pt pdest) {
 #endif				
 					//you hit an obstacle move in reverse direction
 					downward_dir ? MoveUp() : MoveDown();
+					//hit an obstcle
+					bObsty = true;
 					continue;
 				}
 				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[4]) {//we hit snow coverd square
@@ -244,7 +295,14 @@ inline void SetCourse(pt psrc, pt pdest) {
 					stk_ok.push(pt(x, y));
 
 					//time to disable vertical motion
-					vert ? vert = false : vert = true;
+					if (pdest.x != x)
+						vert ? vert = false : vert = true;
+					else
+						vert = false; //only move 
+
+					if (OffTargety(pdest)) {
+						downward_dir ? downward_dir = false : downward_dir = true;
+					}
 					continue;
 				}
 				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[5]) {//cleaned up of snow square
@@ -255,7 +313,14 @@ inline void SetCourse(pt psrc, pt pdest) {
 					stk_ok.push(pt(x, y));
 
 					//time to disable vertical motion
-					vert ? vert = false : vert = true;
+					if (pdest.x != x)
+						vert ? vert = false : vert = true;
+					else
+						vert = false; //only move 
+
+					if (OffTargety(pdest)) {
+						downward_dir ? downward_dir = false : downward_dir = true;
+					}
 					continue;
 
 				}

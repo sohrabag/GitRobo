@@ -100,6 +100,9 @@ inline bool Arrived(pt psrc, pt pdest) {
 //and very efficient
 inline void SetCourse(pt psrc, pt pdest) {
 
+	downward_dir = !(psrc.x > pdest.x);
+	forward_dir = !(psrc.y > pdest.y);
+	/*
 		try {
 			//calculate distance between two homes and place it in pt_dist
 			pt pt_dist(0, 0);
@@ -108,59 +111,114 @@ inline void SetCourse(pt psrc, pt pdest) {
 
 			//determine course of movement on the sweden map
 			if (pt_dist.x > 0 && pt_dist.y > 0) {
-				downward_dir = false; forward_dir = false;
+			downward_dir = false; forward_dir = false;
 			}
 			else if (pt_dist.x > 0 && pt_dist.y < 0) {
-				downward_dir = false; forward_dir = true;
+			downward_dir = false; forward_dir = true;
 			}
 			else if (pt_dist.x < 0 && pt_dist.y > 0) {
-				downward_dir = true; forward_dir = false;
+			downward_dir = true; forward_dir = false;
 			}
 			else if (pt_dist.x < 0 && pt_dist.y < 0) {
-				downward_dir = true; forward_dir = true;
+			downward_dir = true; forward_dir = true;
 			}
 			else throw;
-
 		}
 		catch (const std::exception&)
 		{
 			std::cout << "an exception happened" << std::endl;
 		}
-	}
+		*/
 
-//off target horizontally
-inline bool OffTargety(pt pdest) {
-	bool bOffx(false);
-	if (pdest.x < x && !downward_dir) {
-		bOffx = false;
 	}
-	else if (pdest.x > x && !downward_dir) {
-		bOffx = true;
-	}
-	else if (pdest.x < x && downward_dir) {
-		bOffx = true;
-	}
-	else if (pdest.x > x && downward_dir) {
-		bOffx = false;
-	}
-
-	return bOffx;
-}
 
 //off target vertically
+inline bool OffTargety(pt pdest) {
+	//According to KMAP : z = !(A || B) OR Z = (!A && !B)
+/*
+bool bOffx(false);
+if (pdest.x < x && !downward_dir) {
+bOffx = false;
+}
+else if (pdest.x > x && !downward_dir) {
+bOffx = true;
+}
+else if (pdest.x < x && downward_dir) {
+bOffx = true;
+}
+else if (pdest.x > x && downward_dir) {
+bOffx = false;
+}
+
+return bOffx;
+*/
+	return (((pdest.x < x) && !downward_dir) || ((pdest.x < x) && downward_dir));
+}
+
+//off target horizontally
 inline bool OffTargetx(pt pdest) {
-	bool bOffy(false);
 
-	if (pdest.y > y && forward_dir)
-		bOffy = false;
-	else if (pdest.y < y && !forward_dir)
-		bOffy = false;
-	else if (pdest.y > y && !forward_dir)
-		bOffy = true;
-	else if (pdest.y < y && forward_dir)
-		bOffy = true;
+	//According to KMAP : z = !(A || B) OR Z = (!A && !B)
+/*
+bool bOffy(false);
+if (pdest.y > y && forward_dir)
+bOffy = false;
+else if (pdest.y < y && !forward_dir)
+bOffy = false;
+else if (pdest.y > y && !forward_dir)
+bOffy = true;
+else if (pdest.y < y && forward_dir)
+bOffy = true;
 
-	return bOffy;
+return bOffy;
+*/
+	return (((pdest.y > y) && !forward_dir) || (!(pdest.y > y) && forward_dir));
+
+}
+
+inline void Proceed_vert(pt pdest, char * t) {
+
+	downward_dir ? MoveDown() : MoveUp();
+#ifdef _DEBUG
+	std::cout << t << '\n' << "x is: " << x << " y is: " << y << std::endl;
+#endif
+	stk_ok.push(pt(x, y));
+
+	//time to disable vertical motion
+	if (pdest.x != x && OffTargety(pdest))
+		vert ? vert = false : vert = true;
+	else
+		vert = false; //only move horizontally
+
+	bObsty = false;
+
+	if (OffTargety(pdest) && !bObstx) {
+		downward_dir ? downward_dir = false : downward_dir = true;
+	}
+}
+
+inline void Proceed_horiz(pt pdest, char * t) {
+	//Move horizontally
+	forward_dir ? MoveForward() : MoveBackward();
+	//Add this to the path we want to plow snow (.)
+	stk_ok.push(pt(x, y));
+	//now we have to move vertically change vert to true
+	if (pdest.y != y && OffTargetx(pdest)) //unless you hit the row that the home is sitting on it.
+		vert ? vert = false : vert = true;
+	else
+		vert = true; //only move vertically from now on
+#ifdef _DEBUG
+	std::cout << t << '\n' << "x is: " << x << " y is: " << y << std::endl;
+#endif
+
+	bObstx = false;
+
+	//check off-the target conditions
+	if (OffTargetx(pdest) && !bObsty) {
+		//change the course horizontally and vertically
+		forward_dir ? forward_dir = false : forward_dir = true; //change the course to backward direction
+	}
+
 }
 
 //FindPath finds the path to reach from source to destination home
@@ -182,8 +240,8 @@ inline bool OffTargetx(pt pdest) {
 		//
 		do {
 			//check if x an y are in boundries of the map of sweden
-			if (x < 0 && x >= height) forward_dir ? forward_dir = false : forward_dir = true;
-			if (y < 0 && y >= width) downward_dir ? downward_dir = false : downward_dir = true;
+			if (x < 0 && x > (height -1)) forward_dir ? forward_dir = false : forward_dir = true;
+			if (y < 0 && y > (width-1)) downward_dir ? downward_dir = false : downward_dir = true;
 
 			//check if we arrived to destination home
 			if (Arrived(psrc, pdest)) break;
@@ -192,19 +250,27 @@ inline bool OffTargetx(pt pdest) {
 			if (!vert) 
 			{
 				//move horizontally in predefined direction
-
+				if (y < 1) { std::cout << "Failed to find path" << std::endl; return path; }
 				std::cout << "Moving horizontally..." << std::endl;
 				if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[0] ) {
-					std::cout << "hit a home A..." << std::endl;
+					std::cout << "hit home A..." << std::endl;
+					Proceed_horiz(pdest, "hit home A...");
+					continue;
 				}
 				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[1]) {
-					std::cout << "hit a home B..." << std::endl;
+					std::cout << "hit home B..." << std::endl;
+					Proceed_horiz(pdest, "hit home B...");
+					continue;
 				}
 				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[2]) {
-					std::cout << "hit a home C..." << std::endl;
+					std::cout << "hit home C..." << std::endl;
+					Proceed_horiz(pdest, "hit home C...");
+					continue;
 				}
 				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[3]) {
-					std::cout << "hit a home D..." << std::endl;
+					std::cout << "hit home D..." << std::endl;
+					Proceed_horiz(pdest, "hit home D...");
+					continue;
 				}
 				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[6]) { // we hit the tree square (#)
 					
@@ -225,62 +291,38 @@ inline bool OffTargetx(pt pdest) {
 				}
 				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[4]) { //hit the snowy square (o)
 																				 //add this to the path we want to plow snow
-					//Move horizontally
-					forward_dir ? MoveForward() : MoveBackward();
-					//Add this to the path we want to plow snow (.)
-					stk_ok.push(pt(x, y));
-					//now we have to move vertically change vert to true
-					if (pdest.y != y) //unless you hit the row that the home is sitting on it.
-						vert ? vert = false : vert = true;
-					else
-						vert = true; //only move vertically from now on
-#ifdef _DEBUG
-					std::cout << "o--- snowy road " << '\n' << "x is: " << x << " y is: " << y << std::endl;
-#endif
-					//check off-the target conditions
-					if (OffTargetx(pdest) && !bObstx) {
-						//change the course horizontally and vertically
-						forward_dir ? forward_dir = false : forward_dir = true; //change the course to backward direction
-					}
-
+																				 //Move horizontally
+					Proceed_horiz(pdest, "o--- snowy road ");
 					continue;
 				}
 				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[5]) {//hit cleaned square
-					//Move horizontally
-					forward_dir ? MoveForward() : MoveBackward();
-					//Add this to the path we want to plow snow (.)
-					stk_ok.push(pt(x, y));
-					//now we have to move vertically change vert to true
-					if(pdest.y != y) //unless you hit the row that the home is sitting on it.
-						vert ? vert = false : vert = true;
-					else
-						vert = true; //only move vertically from now on
-
-#ifdef _DEBUG
-					std::cout << ". cleaned up road " << '\n' << "x is: " << x << " y is: " << y << std::endl;
-#endif
-					//check off-the target conditions
-					if (OffTargetx(pdest) && !bObstx) {
-						//change the course horizontally and vertically
-						forward_dir ? forward_dir = false : forward_dir = true; //change the course to reverse direction
-					}
-
+																				//Move horizontally
+					Proceed_horiz(pdest, ".--- cleaned up road ");
 					continue;
 				}
 			}
 			else {//move vertically in predefined direction
+				if (x < 1) { std::cout << "Failed to find the path to destination home" << std::endl; }
 				std::cout << "Moving vertically..." << std::endl;
-				if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[0]) {
-					std::cout << "hit a home A..." << std::endl;
+				if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[0]) {
+					std::cout << "hit home A..." << std::endl;
+					Proceed_vert(pdest, "hit home A...");
+					continue;
 				}
-				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[1]) {
-					std::cout << "hit a home B..." << std::endl;
+				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[1]) {
+					std::cout << "hit home B..." << std::endl;
+					Proceed_vert(pdest, "hit home B...");
+					continue;
 				}
-				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[2]) {
-					std::cout << "hit a home C..." << std::endl;
+				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[2]) {
+					std::cout << "hit home C..." << std::endl;
+					Proceed_vert(pdest, "hit home C...");
+					continue;
 				}
-				else if (map[x][forward_dir ? (y + 1) : (y - 1)] == legend[3]) {
-					std::cout << "hit a home D..." << std::endl;
+				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[3]) {
+					std::cout << "hit home D..." << std::endl;
+					Proceed_vert(pdest, "hit home D...");
+					continue;
 				}
 				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[6]) {//we hit tree obstacle square
 					//move vertically in reverse direction
@@ -299,39 +341,11 @@ inline bool OffTargetx(pt pdest) {
 					continue;
 				}
 				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[4]) {//we hit snow coverd square
-					downward_dir ? MoveDown() : MoveUp();
-#ifdef _DEBUG
-					std::cout << "o--- snow covered road" << '\n' << "x is: " << x << " y is: " << y << std::endl;
-#endif
-					stk_ok.push(pt(x, y));
-
-					//time to disable vertical motion
-					if (pdest.x != x)
-						vert ? vert = false : vert = true;
-					else
-						vert = false; //only move horizontally
-
-					if (OffTargety(pdest) && !bObsty) {
-						downward_dir ? downward_dir = false : downward_dir = true;
-					}
+					Proceed_vert(pdest, "o--- snow covered road");
 					continue;
 				}
 				else if (map[downward_dir ? (x + 1) : (x - 1)][y] == legend[5]) {//cleaned up of snow square
-					downward_dir ? MoveDown() : MoveUp();
-#ifdef _DEBUG
-					std::cout << ". cleaned up road " << '\n' << "x is: " << x << " y is: " << y << std::endl;
-#endif
-					stk_ok.push(pt(x, y));
-
-					//time to disable vertical motion
-					if (pdest.x != x)
-						vert ? vert = false : vert = true;
-					else
-						vert = false; //only move horizontally
-
-					if (OffTargety(pdest) && !bObsty) {
-						downward_dir ? downward_dir = false : downward_dir = true;
-					}
+					Proceed_vert(pdest, ".--- cleaned up road ");
 					continue;
 
 				}
